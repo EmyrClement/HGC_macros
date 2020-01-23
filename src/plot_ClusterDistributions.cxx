@@ -71,7 +71,11 @@ void HGC::plot_GenRecoET(){
   Plotter * plotter = new Plotter( _cmd );
   double x[16]={0,10,20,40,60,80,100,120,140,160,180,200,220,250,300,400};
   
-  TString file = VBF_HGG_PU200_SuperTC_ScintillatorStudies_DR0p2;
+  // TString file = VBF_HGG_PU200_SuperTC_ScintillatorStudies_DR0p2;
+  // TString file = "VBF-HGG-PU200-Standard-DR0p2";
+  TString file = "20200116/VBF-HGG-PU200-OOP-LargerDR-DR0p2";
+  // TString file = "testFile";
+  // TString file = "DoubleNu-PU200-Standard-DR0p2";
 
   // std::vector<TString> trees = { tree_stc_validation, tree_stc};
   // std::vector<TString> description = { "STC4_CTC4", "STC4_16"};
@@ -158,9 +162,40 @@ void HGC::plot_GenRecoET(){
   // std::vector<TString> legend = { "tcs" };
   // std::string algo = "hgcalTriggerNtuplizer";
 
-  std::vector<TString> trees = { tree_thresh, tree_stc, tree_stcScin4, tree_stcScin4C};
-  std::vector<TString> description = { "th","stc4161616","stc416164","stc416164Coarse"};
-  std::vector<TString> legend = { "Threshold","STC 4,16,16,16","STC 4,16,16,4","STC 4,16,16,4(Coarse)"};
+  // std::vector<TString> trees = { tree_thresh, tree_stc, tree_stcScin4, tree_stcScin4C};
+  // std::vector<TString> description = { "th","stc4161616","stc416164","stc416164Coarse"};
+  // std::vector<TString> legend = { "Threshold","STC 4,16,16,16","STC 4,16,16,4","STC 4,16,16,4(Coarse)"};
+
+  // std::vector<TString> trees = { "Fp8ThresholdDummyHistomaxNtup" };
+  // std::vector<TString> description = { "Fp8ThresholdDummyHistomaxNtup" };
+  // std::vector<TString> legend = { "Fp8ThresholdDummyHistomaxNtup" };
+
+  // std::vector<TString> trees = { "Fp8BestchoiceDummyHistomaxNtup" };
+  // std::vector<TString> description = { "Fp8BestchoiceDummyHistomaxNtup" };
+  // std::vector<TString> legend = { "Fp8BestchoiceDummyHistomaxNtup" };
+
+  // std::vector<TString> trees = { "Fp8ThresholdDummyHistomaxNtup" };//, "Fp8BestchoiceDummyHistomaxNtup", "Fp8Stc4161616DummyHistomaxNtup" };
+  // std::vector<TString> description = { "Threshold" };//, "BestChoice", "STC" };
+  // std::vector<TString> legend = { "Threshold" };//, "Best Choice", "STC" };
+
+  // std::vector<TString> trees = { "Fp8BestchoiceDummyHistomaxNtup" };
+  // std::vector<TString> description = { "BestChoice" };
+  // std::vector<TString> legend = { "BestChoice" };
+
+  //   std::vector<TString> trees = { "Fp8Stc4161616DummyHistomaxNtup" };
+  // std::vector<TString> description = { "STC" };
+  // std::vector<TString> legend = { "STC" };
+
+
+  // std::vector<TString> trees = { "NoOOTMixedbcstcDummyHistomaxxydr015Genclustersntuple" };
+  // std::vector<TString> description = { "Mixed" };
+  // std::vector<TString> legend = { "Mixed" };
+
+  std::vector<TString> trees = { "NoOOTThresholdDummyHistomaxxydr015Genclustersntuple" };
+  std::vector<TString> description = { "Threshold" };
+  std::vector<TString> legend = { "Threshold" };
+
+
 
   std::vector<TString> allLegends = {};
 

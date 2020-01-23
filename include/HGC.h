@@ -11,7 +11,8 @@ class HGC{
  private:
 
   Helpers helper;
-  TString snwebb = "/vols/cms/snwebb/HGC_ntuples/";
+  // TString snwebb = "/vols/cms/snwebb/HGC_ntuples/";
+  TString snwebb = "/storage/ec6821/HGC/firstSetup/CMSSW_10_6_1_patch2/src/input/";
   TString tstreble = "/vols/cms/tstreble/HGC_ntuples/";
 
   CmdLine *  _cmd;
