@@ -269,7 +269,13 @@ void HGC::plot_GenRecoET(){
   for(unsigned int i=0;i<trees.size();i++){
 
     // Calibrate and accumulate 2D plots from different eta bins
+    // Also gather parameters of calibration function to parameterise them
     std::vector<TH2F*> calibrated_histos_2D_etaBins;
+    std::vector<TGraphErrors*> calibrationParameters;
+    calibrationParameters.emplace_back( new TGraphErrors( etaCuts.size() - 1 ) );
+    calibrationParameters.emplace_back( new TGraphErrors( etaCuts.size() - 1 ) );
+    calibrationParameters.emplace_back( new TGraphErrors( etaCuts.size() - 1 ) );
+    // (3, new TGraphErrors( etaCuts.size() - 1 ) );
     for (unsigned int i_etaCut =0; i_etaCut < etaCuts.size(); ++i_etaCut ) {
 
       // Get calibration
@@ -279,6 +285,20 @@ void HGC::plot_GenRecoET(){
       double c = profile->GetFunction("pol")->GetParameter( 0 ); 
       double b = profile->GetFunction("pol")->GetParameter( 1 ) ;
       double a = profile->GetFunction("pol")->GetParameter( 2 ) ;
+
+      // Better way to do this, rather than depending on a label?
+      // Also assuming "Inclusive" is always first cut in etaCuts/etaCutLegend
+      if ( !etaCutLegend[i_etaCut].Contains("Inclusive") ) {
+
+        double midEta = getMidEta( etaCutDescriptions[i_etaCut] );
+        calibrationParameters[0]->SetPoint( i_etaCut - 1, midEta, c );
+        calibrationParameters[1]->SetPoint( i_etaCut - 1, midEta, b );
+        calibrationParameters[2]->SetPoint( i_etaCut - 1, midEta, a );
+
+        calibrationParameters[0]->SetPointError( i_etaCut - 1, 0, profile->GetFunction("pol")->GetParError( 0 ) );
+        calibrationParameters[1]->SetPointError( i_etaCut - 1, 0, profile->GetFunction("pol")->GetParError( 1 ) );
+        calibrationParameters[2]->SetPointError( i_etaCut - 1, 0, profile->GetFunction("pol")->GetParError( 2 ) );
+      }
 
       // Get 2D histogram of calibrated reco jet pt vs gen jet pt
       TString calibratedJetPt("");
@@ -309,6 +329,41 @@ void HGC::plot_GenRecoET(){
     graphsForEtaCalibPlot.emplace_back( graph );
     allLegendsForEtaCalibPlot.emplace_back(legend.at(i) + " After calibration in #eta");
 
+
+
+    // Alternatively, parameterise eta dependence of the calibration, so apply the calibration as a function of jet eta, not just the eta bin of the jet
+    std::vector< TString > etaDependentCalibrationParams(3,"");
+    for ( unsigned int i = 0; i < calibrationParameters.size(); ++i ) {
+
+      TString fitFunctionName( i==0 || i == 1 ? "[0] + [1]*x + [2]*x*x" : "[0] + [1]*x" );
+      TF1 * fitFunction = new TF1 ( "pol", fitFunctionName , 1.5 , 3);
+      calibrationParameters[i]->Fit(fitFunction);
+      // TF1* fitFunction = calibrationParameters[i]->GetFunction(fitFunctionName);
+
+      if ( i == 0 || i == 1 ) {
+        etaDependentCalibrationParams[i].Form("( %f * abs(jets_eta[VBF_parton_jets]) * abs(jets_eta[VBF_parton_jets]) + %f * abs(jets_eta[VBF_parton_jets]) + %f )", fitFunction->GetParameter( 2 ), fitFunction->GetParameter( 1 ), fitFunction->GetParameter( 0 ) );
+      }
+      else {
+        etaDependentCalibrationParams[i].Form("( %f * abs(jets_eta[VBF_parton_jets]) + %f )", fitFunction->GetParameter( 1 ), fitFunction->GetParameter( 0 ) );
+      }
+    }
+
+    plotter->DrawEtaCalibrationPlots( calibrationParameters, "EtaParametrisedAndCalibrated" );
+
+   
+ TString calibratedJetPt("");
+    calibratedJetPt = "( -1.0 * " + etaDependentCalibrationParams[1] + " + sqrt( " + etaDependentCalibrationParams[1] + "*" + etaDependentCalibrationParams[1] + " - 4*" + etaDependentCalibrationParams[2] + "*(" + etaDependentCalibrationParams[0] + "-jets_pt[VBF_parton_jets]) ) ) / (2 * " + etaDependentCalibrationParams[2] + ")";
+    std::cout << "Calibrated jet pt string : " << calibratedJetPt << std::endl;
+    if ( etaCutLegend[0] != "Inclusive" ) {
+      std::cout << "WARNING : The first \"eta cut\" should be inclusive (i.e. no cut on eta).  Jet resolutions with eta dependent calibrations will be buggy" << std::endl;
+    }
+    HistObject etaDependentCalibratedHist( "EtaDependentCalibratedJets", (snwebb + "/" + file + "/jet_ntuples_merged/ntuple_jet_merged_"+ trees.at(i) +"_"+stats+".root"), trees.at(i)+"_Jet", "", calibratedJetPt+":genjet_pt[VBF_parton_genjet]" ,etaCuts[0], true  );
+    TH2F * hist = plotter->Draw2D(etaDependentCalibratedHist, 15, x, 4000,0,400  ,"EtaParametrisedAndCalibrated/"+fullDescriptions.at(i) );
+    TGraphErrors * graphAfterEtaParam = plotter->DrawProfile(hist  ,"EtaParametrisedAndCalibrated/"+(fullDescriptions.at(i)+"_profile"), "s" );
+    graphs.emplace_back( graphAfterEtaParam );
+
+    graphsForEtaCalibPlot.emplace_back( graphAfterEtaParam );
+    allLegendsForEtaCalibPlot.emplace_back( "Eta Param." );
   }
   
   // Plot all resolution plots (one for each bin in eta, so many)
@@ -337,6 +392,23 @@ void HGC::plot_GenRecoET(){
    // CalculateRates ( profile->GetFunction("pol")->GetParameter( 0 ), profile->GetFunction("pol")->GetParameter( 1 ), profile->GetFunction("pol")->GetParameter( 2 ) , algo, mapping);
   //  JetStudies(  profile->GetFunction("pol")->GetParameter( 0 ), profile->GetFunction("pol")->GetParameter( 1 ), profile->GetFunction("pol")->GetParameter( 2 ), algo  );
   
+}
+
+double HGC::getMidEta( TString etaCutDescription ){
+  TObjArray* minAndMaxEta = etaCutDescription.Tokenize( "_" );
+  if ( minAndMaxEta->GetEntries() != 2 ) {
+    std::cout << "WARNING : Didn't parse two eta values from this eta cut : " << etaCutDescription << std::endl;
+    std::cout << "Returning -999" << std::endl;
+    return -999;
+  }
+  double minEta = ( (TObjString*) minAndMaxEta->At(0) )->String().ReplaceAll("p",".").Atof();
+  double maxEta = ( (TObjString*) minAndMaxEta->At(1) )->String().ReplaceAll("p",".").Atof();
+
+  if ( minEta < maxEta ) 
+    return minEta + fabs(maxEta - minEta) / 2;
+  else
+    return maxEta + fabs(maxEta - minEta) / 2;
+
 }
 
 

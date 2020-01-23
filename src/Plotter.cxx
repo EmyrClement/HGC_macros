@@ -6,6 +6,7 @@ Plotter::Plotter( CmdLine * cmd ){
   _outdir = cmd->string_val( "--outdir" );
   std::system( ("mkdir -p plots/" + _outdir )   .c_str() );
   std::system( ("mkdir -p plots/" + _outdir + "/EtaCalibrated/" )   .c_str() );
+  std::system( ("mkdir -p plots/" + _outdir + "/EtaParametrisedAndCalibrated/" )   .c_str() );
 
   InitialiseLegend();
   InitialiseCanvas();
@@ -65,7 +66,7 @@ void Plotter::DrawGraphs(std::vector<TGraphErrors*>& graphs, std::vector<TString
   TCanvas * c = _canvas;
   c->SetCanvasSize(800, 600);
   gPad->SetTicks(1,1);
-  SetLegendXY( 0.6, 0.63, 0.82, 0.85  );
+  SetLegendXY( 0.6-0.3, 0.63, 0.82-0.3, 0.85  );
   _legend->Clear();
   int i = 0;
     for (auto &graph: graphs ){    
@@ -125,6 +126,27 @@ void Plotter::DrawGraph(TGraph* graph, TString filename){
   c->SaveAs("plots/" + TString(_outdir) + "/"+filename+".png");
   c->SaveAs("plots/" + TString(_outdir) + "/"+filename+".root");
 
+}
+
+void Plotter::DrawEtaCalibrationPlots( std::vector<TGraphErrors*>& graphs, TString outDirSuffix ) {
+  for ( unsigned int i_graph = 0; i_graph < graphs.size(); ++i_graph ) {
+    TCanvas * c = _canvas;
+    c->SetCanvasSize(800, 600);
+    gPad->SetTicks(1,1);
+
+    TGraphErrors* graph = graphs[i_graph];
+
+    graph->SetLineColor( 2 );
+    graph->SetLineWidth( 2 );
+    graph->SetMarkerColor( 2 );
+    graph->SetMarkerStyle( 21 );
+
+    graph->GetXaxis()->SetRangeUser(1.5,3.);
+
+    graph->Draw("AP");
+
+    c->SaveAs("plots/" + TString(_outdir) + "/" + outDirSuffix + "/CalibEtaFit_"+i_graph+".png");
+  }
 }
 
 
@@ -737,9 +759,6 @@ TH2F * Plotter::Draw2D( HistObject hist, int nbins1, double* x, int nbins2, doub
 
   return histo;
 }
-
-
-
 
 
 

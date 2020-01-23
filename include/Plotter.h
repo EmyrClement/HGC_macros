@@ -42,6 +42,7 @@ class Plotter{
   void DrawEtaGraphs (std::vector<TGraphErrors*>& graphs);
   //  void DrawGraphs (std::vector<TGraph*>& graphs);
   void DrawGraph(TGraph* graph, TString filename);
+  void DrawEtaCalibrationPlots (std::vector<TGraphErrors*>& graphs, TString outDirSuffix);
 
   
 

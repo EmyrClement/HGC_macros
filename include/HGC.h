@@ -65,6 +65,9 @@ class HGC{
 
   void calibrate_jet(TString filein,TString fileout);
 
+  // Helper for eta calibration
+  double getMidEta( TString etaCutDescription );
+
 
 
 };
